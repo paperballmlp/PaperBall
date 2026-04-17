@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>PAPERBALL MLP</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:black;
+  color:white;
+  text-align:center;
+}
+
+/* INTRO */
+#intro{
+  position:fixed;
+  width:100%;
+  height:100%;
+  background:black;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+}
+#intro h1{
+  color:red;
+  font-size:60px;
+}
+
+/* HEADER */
+header{
+  background:linear-gradient(red,darkred);
+  padding:10px;
+}
+
+/* CARDS */
+.card{
+  margin:10px;
+  padding:10px;
+  border:1px solid red;
+  background:#111;
+}
+
+/* BUTTONS */
+button{
+  background:red;
+  border:none;
+  padding:10px;
+  margin:5px;
+  color:white;
+  border-radius:8px;
+}
+
+/* INPUT */
+input{
+  padding:5px;
+  margin:5px;
+}
+
+/* SCORE */
+.score{
+  font-size:50px;
+  display:flex;
+  justify-content:space-around;
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- INTRO -->
+<div id="intro">
+  <h1>⚾ PLAY BALL</h1>
+  <button onclick="start()">ENTRAR</button>
+</div>
+
+<header>
+  <h1 id="liga">🏆 PAPERBALL</h1>
+  <input id="ligaInput" placeholder="Nombre de la liga">
+  <button onclick="setLiga()">Cambiar liga</button>
+</header>
+
+<!-- EQUIPOS -->
+<div class="card">
+<h3>Equipos</h3>
+<input id="t1" placeholder="Equipo 1">
+<input id="t2" placeholder="Equipo 2">
+<button onclick="setTeams()">Guardar equipos</button>
+</div>
+
+<!-- MARCADOR -->
+<div class="card">
+<h3>Marcador</h3>
+
+<div class="score">
+<div id="s1">0</div>
+<div id="s2">0</div>
+</div>
+
+<button onclick="add(1)">➕ Carrera 1</button>
+<button onclick="add(2)">➕ Carrera 2</button>
+
+<button onclick="next()">➡️ Entrada</button>
+<button onclick="end()">🏁 Terminar juego</button>
+
+<p>Entrada: <span id="inning">1</span></p>
+</div>
+
+<!-- CUADRO -->
+<div class="card">
+<h3>📊 Entradas</h3>
+<table border="1" width="100%">
+<tr id="head"></tr>
+<tr id="r1"></tr>
+<tr id="r2"></tr>
+</table>
+</div>
+
+<!-- TORNEO -->
+<div class="card">
+<h3>🏆 TORNEO</h3>
+
+<div id="octavos"></div>
+<div id="cuartos"></div>
+<div id="semi"></div>
+<div id="final"></div>
+
+<h2 id="champ"></h2>
+</div>
+
+<audio id="sound" src="https://www.myinstants.com/media/sounds/mario-coin.mp3"></audio>
+
+<script>
+
+/* ===== INTRO ===== */
+function start(){
+document.getElementById("intro").style.display="none";
+}
+
+/* ===== LIGA ===== */
+function setLiga(){
+document.getElementById("liga").innerText =
+"🏆 "+ligaInput.value;
+}
+
+/* ===== JUEGO ===== */
+let inning=1;
+let score1=0;
+let score2=0;
+
+let data1=Array(30).fill(0);
+let data2=Array(30).fill(0);
+
+/* SONIDO */
+function sound(){
+let s=document.getElementById("sound");
+s.currentTime=0;
+s.play();
+}
+
+/* CARRERAS */
+function add(t){
+sound();
+if(t==1){
+score1++;
+data1[inning-1]++;
+}else{
+score2++;
+data2[inning-1]++;
+}
+update();
+}
+
+/* ENTRADA */
+function next(){
+inning++;
+update();
+}
+
+/* TERMINAR */
+function end(){
+alert("Juego terminado ⚾");
+}
+
+/* UPDATE */
+function update(){
+
+s1.innerText=score1;
+s2.innerText=score2;
+inning.innerText=inning;
+
+let h="",a="",b="";
+
+for(let i=0;i<20;i++){
+h+=`<th>${i+1}</th>`;
+a+=`<td>${data1[i]}</td>`;
+b+=`<td>${data2[i]}</td>`;
+}
+
+head.innerHTML=h;
+r1.innerHTML=a;
+r2.innerHTML=b;
+}
+
+update();
+
+/* ===== TORNEO SIMPLE ===== */
+let teams=["A","B","C","D"];
+
+let octavos=document.getElementById("octavos");
+octavos.innerHTML="⚾ Octavos listos";
+
+/* placeholder básico */
+</script>
+
+</body>
+</html>
