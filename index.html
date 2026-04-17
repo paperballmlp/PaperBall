@@ -2,7 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>PAPERBALL MLP</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PaperBall</title>
 
 <style>
 body{
@@ -13,208 +14,419 @@ body{
   text-align:center;
 }
 
-/* INTRO */
-#intro{
-  position:fixed;
-  width:100%;
-  height:100%;
-  background:black;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  z-index:9999;
-}
-#intro h1{
-  color:red;
-  font-size:60px;
-}
-
-/* HEADER */
 header{
-  background:linear-gradient(red,darkred);
   padding:10px;
+  font-size:22px;
+  font-weight:bold;
 }
 
-/* CARDS */
-.card{
-  margin:10px;
-  padding:10px;
-  border:1px solid red;
-  background:#111;
-}
-
-/* BUTTONS */
-button{
-  background:red;
+input{
+  width:40%;
+  padding:8px;
+  font-size:16px;
+  text-align:center;
+  border-radius:8px;
   border:none;
-  padding:10px;
+}
+
+.board{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:2px;
+  margin:10px;
+}
+
+.cell{
+  background:#111;
+  padding:15px;
+  font-size:20px;
+  border:1px solid white;
+}
+
+.team{
+  font-size:22px;
+  font-weight:bold;
+}
+
+.score{
+  font-size:50px;
+}
+
+button{
+  padding:12px;
   margin:5px;
-  color:white;
+  font-size:16px;
+  border:none;
   border-radius:8px;
 }
 
-/* INPUT */
-input{
-  padding:5px;
-  margin:5px;
+.add{background:green;color:white;}
+.remove{background:red;color:white;}
+.save{background:blue;color:white;}
+
+#controls{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
 }
 
-/* SCORE */
-.score{
-  font-size:50px;
-  display:flex;
-  justify-content:space-around;
+.section{
+  margin-top:20px;
+  padding:10px;
+  background:#111;
+}
+
+.rank{
+  text-align:left;
+  padding:10px;
 }
 </style>
-
 </head>
 
 <body>
 
-<!-- INTRO -->
-<div id="intro">
-  <h1>⚾ PLAY BALL</h1>
-  <button onclick="start()">ENTRAR</button>
+<header>⚾ PAPERBALL ⚾</header>
+
+<div>
+  <input id="teamA" placeholder="Cañeros">
+  <span style="font-size:30px;">VS</span>
+  <input id="teamB" placeholder="Ice Cub">
 </div>
 
-<header>
-  <h1 id="liga">🏆 PAPERBALL</h1>
-  <input id="ligaInput" placeholder="Nombre de la liga">
-  <button onclick="setLiga()">Cambiar liga</button>
-</header>
+<div class="score" id="scoreA">0</div>
+<div class="score" id="scoreB">0</div>
 
-<!-- EQUIPOS -->
-<div class="card">
-<h3>Equipos</h3>
-<input id="t1" placeholder="Equipo 1">
-<input id="t2" placeholder="Equipo 2">
-<button onclick="setTeams()">Guardar equipos</button>
+<div class="board" id="board"></div>
+
+<div id="controls">
+  <button class="add" onclick="addRun(0)">+ A</button>
+  <button class="add" onclick="addRun(1)">+ B</button>
+  <button class="remove" onclick="removeRun(0)">- A</button>
+  <button class="remove" onclick="removeRun(1)">- B</button>
 </div>
 
-<!-- MARCADOR -->
-<div class="card">
-<h3>Marcador</h3>
+<br>
 
-<div class="score">
-<div id="s1">0</div>
-<div id="s2">0</div>
+<button class="save" onclick="endGame()">TERMINAR PARTIDO</button>
+
+<div class="section">
+  <h2>🏆 RANKING</h2>
+  <div id="ranking"></div>
 </div>
 
-<button onclick="add(1)">➕ Carrera 1</button>
-<button onclick="add(2)">➕ Carrera 2</button>
-
-<button onclick="next()">➡️ Entrada</button>
-<button onclick="end()">🏁 Terminar juego</button>
-
-<p>Entrada: <span id="inning">1</span></p>
+<div class="section">
+  <h2>🏆 TORNEO</h2>
+  <p>Octavos → Cuartos → Semifinal → Final</p>
 </div>
-
-<!-- CUADRO -->
-<div class="card">
-<h3>📊 Entradas</h3>
-<table border="1" width="100%">
-<tr id="head"></tr>
-<tr id="r1"></tr>
-<tr id="r2"></tr>
-</table>
-</div>
-
-<!-- TORNEO -->
-<div class="card">
-<h3>🏆 TORNEO</h3>
-
-<div id="octavos"></div>
-<div id="cuartos"></div>
-<div id="semi"></div>
-<div id="final"></div>
-
-<h2 id="champ"></h2>
-</div>
-
-<audio id="sound" src="https://www.myinstants.com/media/sounds/mario-coin.mp3"></audio>
 
 <script>
+let scoreA = 0;
+let scoreB = 0;
+let inning = 1;
+let maxInnings = 7;
 
-/* ===== INTRO ===== */
-function start(){
-document.getElementById("intro").style.display="none";
+let history = JSON.parse(localStorage.getItem("paperball_history") || "[]");
+
+const board = document.getElementById("board");
+
+function drawBoard(){
+  board.innerHTML = "";
+  for(let i=1;i<=7;i++){
+    board.innerHTML += `<div class="cell">${i}</div>`;
+  }
+  board.innerHTML += `<div class="cell">EX</div>`;
 }
 
-/* ===== LIGA ===== */
-function setLiga(){
-document.getElementById("liga").innerText =
-"🏆 "+ligaInput.value;
+drawBoard();
+
+function playSound(){
+  let ctx = new (window.AudioContext || window.webkitAudioContext)();
+  let osc = ctx.createOscillator();
+  osc.type = "square";
+  osc.frequency.value = 600;
+  osc.connect(ctx.destination);
+  osc.start();
+  setTimeout(()=>osc.stop(),100);
 }
 
-/* ===== JUEGO ===== */
-let inning=1;
-let score1=0;
-let score2=0;
-
-let data1=Array(30).fill(0);
-let data2=Array(30).fill(0);
-
-/* SONIDO */
-function sound(){
-let s=document.getElementById("sound");
-s.currentTime=0;
-s.play();
-}
-
-/* CARRERAS */
-function add(t){
-sound();
-if(t==1){
-score1++;
-data1[inning-1]++;
-}else{
-score2++;
-data2[inning-1]++;
-}
-update();
-}
-
-/* ENTRADA */
-function next(){
-inning++;
-update();
-}
-
-/* TERMINAR */
-function end(){
-alert("Juego terminado ⚾");
-}
-
-/* UPDATE */
 function update(){
+  document.getElementById("scoreA").innerText = scoreA;
+  document.getElementById("scoreB").innerText = scoreB;
 
-s1.innerText=score1;
-s2.innerText=score2;
-inning.innerText=inning;
+  if(inning > maxInnings && scoreA === scoreB){
+    maxInnings++; // extra innings
+  }
 
-let h="",a="",b="";
-
-for(let i=0;i<20;i++){
-h+=`<th>${i+1}</th>`;
-a+=`<td>${data1[i]}</td>`;
-b+=`<td>${data2[i]}</td>`;
+  localStorage.setItem("paperball_live", JSON.stringify({scoreA,scoreB,inning}));
 }
 
-head.innerHTML=h;
-r1.innerHTML=a;
-r2.innerHTML=b;
+function addRun(team){
+  if(team===0) scoreA++;
+  if(team===1) scoreB++;
+  playSound();
+  update();
 }
 
-update();
+function removeRun(team){
+  if(team===0 && scoreA>0) scoreA--;
+  if(team===1 && scoreB>0) scoreB--;
+  update();
+}
 
-/* ===== TORNEO SIMPLE ===== */
-let teams=["A","B","C","D"];
+function endGame(){
+  let teamA = document.getElementById("teamA").value || "Cañeros";
+  let teamB = document.getElementById("teamB").value || "Ice Cub";
 
-let octavos=document.getElementById("octavos");
-octavos.innerHTML="⚾ Octavos listos";
+  let winner = scoreA > scoreB ? teamA : teamB;
+  let record = scoreA > scoreB ? `${scoreA}-${scoreB}` : `${scoreB}-${scoreA}`;
 
-/* placeholder básico */
+  history.push({winner,record});
+
+  history.sort((a,b)=>{
+    return parseInt(b.record) - parseInt(a.record);
+  });
+
+  localStorage.setItem("paperball_history", JSON.stringify(history));
+
+  renderRanking();
+
+  alert("Partido terminado: " + winner + " gana " + record);
+}
+
+function renderRanking(){
+  let div = document.getElementById("ranking");
+  div.innerHTML = "";
+  history.forEach((h,i)=>{
+    div.innerHTML += `<p>${i+1}. ${h.winner} (${h.record})</p>`;
+  });
+}
+
+renderRanking();
+
+// cargar estado guardado
+let saved = JSON.parse(localStorage.getItem("paperball_live"));
+if(saved){
+  scoreA = saved.scoreA;
+  scoreB = saved.scoreB;
+  inning = saved.inning;
+  update();
+}
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PaperBall</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:black;
+  color:white;
+  text-align:center;
+}
+
+header{
+  padding:10px;
+  font-size:22px;
+  font-weight:bold;
+}
+
+input{
+  width:40%;
+  padding:8px;
+  font-size:16px;
+  text-align:center;
+  border-radius:8px;
+  border:none;
+}
+
+.board{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:2px;
+  margin:10px;
+}
+
+.cell{
+  background:#111;
+  padding:15px;
+  font-size:20px;
+  border:1px solid white;
+}
+
+.team{
+  font-size:22px;
+  font-weight:bold;
+}
+
+.score{
+  font-size:50px;
+}
+
+button{
+  padding:12px;
+  margin:5px;
+  font-size:16px;
+  border:none;
+  border-radius:8px;
+}
+
+.add{background:green;color:white;}
+.remove{background:red;color:white;}
+.save{background:blue;color:white;}
+
+#controls{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+
+.section{
+  margin-top:20px;
+  padding:10px;
+  background:#111;
+}
+
+.rank{
+  text-align:left;
+  padding:10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>⚾ PAPERBALL ⚾</header>
+
+<div>
+  <input id="teamA" placeholder="Cañeros">
+  <span style="font-size:30px;">VS</span>
+  <input id="teamB" placeholder="Ice Cub">
+</div>
+
+<div class="score" id="scoreA">0</div>
+<div class="score" id="scoreB">0</div>
+
+<div class="board" id="board"></div>
+
+<div id="controls">
+  <button class="add" onclick="addRun(0)">+ A</button>
+  <button class="add" onclick="addRun(1)">+ B</button>
+  <button class="remove" onclick="removeRun(0)">- A</button>
+  <button class="remove" onclick="removeRun(1)">- B</button>
+</div>
+
+<br>
+
+<button class="save" onclick="endGame()">TERMINAR PARTIDO</button>
+
+<div class="section">
+  <h2>🏆 RANKING</h2>
+  <div id="ranking"></div>
+</div>
+
+<div class="section">
+  <h2>🏆 TORNEO</h2>
+  <p>Octavos → Cuartos → Semifinal → Final</p>
+</div>
+
+<script>
+let scoreA = 0;
+let scoreB = 0;
+let inning = 1;
+let maxInnings = 7;
+
+let history = JSON.parse(localStorage.getItem("paperball_history") || "[]");
+
+const board = document.getElementById("board");
+
+function drawBoard(){
+  board.innerHTML = "";
+  for(let i=1;i<=7;i++){
+    board.innerHTML += `<div class="cell">${i}</div>`;
+  }
+  board.innerHTML += `<div class="cell">EX</div>`;
+}
+
+drawBoard();
+
+function playSound(){
+  let ctx = new (window.AudioContext || window.webkitAudioContext)();
+  let osc = ctx.createOscillator();
+  osc.type = "square";
+  osc.frequency.value = 600;
+  osc.connect(ctx.destination);
+  osc.start();
+  setTimeout(()=>osc.stop(),100);
+}
+
+function update(){
+  document.getElementById("scoreA").innerText = scoreA;
+  document.getElementById("scoreB").innerText = scoreB;
+
+  if(inning > maxInnings && scoreA === scoreB){
+    maxInnings++; // extra innings
+  }
+
+  localStorage.setItem("paperball_live", JSON.stringify({scoreA,scoreB,inning}));
+}
+
+function addRun(team){
+  if(team===0) scoreA++;
+  if(team===1) scoreB++;
+  playSound();
+  update();
+}
+
+function removeRun(team){
+  if(team===0 && scoreA>0) scoreA--;
+  if(team===1 && scoreB>0) scoreB--;
+  update();
+}
+
+function endGame(){
+  let teamA = document.getElementById("teamA").value || "Cañeros";
+  let teamB = document.getElementById("teamB").value || "Ice Cub";
+
+  let winner = scoreA > scoreB ? teamA : teamB;
+  let record = scoreA > scoreB ? `${scoreA}-${scoreB}` : `${scoreB}-${scoreA}`;
+
+  history.push({winner,record});
+
+  history.sort((a,b)=>{
+    return parseInt(b.record) - parseInt(a.record);
+  });
+
+  localStorage.setItem("paperball_history", JSON.stringify(history));
+
+  renderRanking();
+
+  alert("Partido terminado: " + winner + " gana " + record);
+}
+
+function renderRanking(){
+  let div = document.getElementById("ranking");
+  div.innerHTML = "";
+  history.forEach((h,i)=>{
+    div.innerHTML += `<p>${i+1}. ${h.winner} (${h.record})</p>`;
+  });
+}
+
+renderRanking();
+
+// cargar estado guardado
+let saved = JSON.parse(localStorage.getItem("paperball_live"));
+if(saved){
+  scoreA = saved.scoreA;
+  scoreB = saved.scoreB;
+  inning = saved.inning;
+  update();
+}
 </script>
 
 </body>
